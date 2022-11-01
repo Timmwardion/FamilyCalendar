@@ -1,0 +1,586 @@
+views:
+  - title: Home
+    panel: true
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: false
+                type: button
+                tap_action:
+                  action: call-service
+                  service: input_number.decrement
+                  data: {}
+                  target:
+                    entity_id: input_number.calendarpage
+                entity: light.study
+                name: '-'
+              - type: entity
+                entity: input_number.calendarpage
+              - show_name: true
+                show_icon: false
+                type: button
+                tap_action:
+                  action: call-service
+                  service: input_number.increment
+                  data: {}
+                  target:
+                    entity_id: input_number.calendarpage
+                name: +
+          - type: custom:button-card
+            name: planner
+            show_icon: false
+            show_name: false
+            custom_fields:
+              header: |
+                [[[
+                  let calendarPage = Number(states['input_number.calendarpage'].state);
+                  let date_master = new Date();
+                  let date_master_page = new Date(date_master.setDate(date_master.getDate() + calendarPage));
+                  let month = date_master_page.toLocaleString('en-au', { month: 'long' });
+                  let year = date_master_page.getFullYear();
+                  let day = date_master_page.toLocaleDateString('en-au', { day: '2-digit' });
+                  let dayName = date_master_page.toLocaleDateString('en-au', { weekday: 'long' });
+                  let header = `<div class="headerContainer">${dayName} ${day} ${month} ${year}</div>`
+                  return header;
+                ]]]
+              calendar: |
+                [[[
+                  let calendarArray = ["Caldendar1", "Caldendar2", "Caldendar3"];
+                  
+                  let calendar = `<div class="calendar">
+                                      <div class="timeline">`;
+
+                  let rLimit = 25;
+
+                  let r=0;
+                  let c=0;
+                  let i=0;
+
+                  for (r = 0; r < rLimit; r++) {
+                    if (r==0) {
+                    calendar = calendar + `<div class="spacer"></div>`;
+                    } else {
+                    calendar = calendar + `<div class="time-marker">${(r-1)}:00</div>`;
+                    }
+                  }
+
+                  calendar = calendar + `</div><div class="days">`;
+
+                                        
+                      
+                      
+                      let calendarPage = Number(states['input_number.calendarpage'].state);
+                      let date_master = new Date();
+                      let date_master_page = new Date(date_master.setDate(date_master.getDate() + calendarPage));
+                      let month = date_master_page.toLocaleString('en-au', { month: 'long' });
+                      let shortMonth = date_master_page.toLocaleString('en-au', { month: 'short' });
+                      let digitsMonth = date_master_page.toLocaleString('en-au', { month: '2-digit' });
+                      let year = date_master_page.getFullYear();
+                      let day = date_master_page.toLocaleDateString('en-au', { day: '2-digit' });
+                      let dayName = date_master_page.toLocaleDateString('en-au', { weekday: 'long' });
+                      
+                      
+                        function returnDaysInMonth(month, year) {return new Date(year, month, 0).getDate();}
+                        let daysInMonth = returnDaysInMonth(digitsMonth, year);
+
+                      for (c = 0; c < calendarArray.length; c++) {
+
+                        let calNum = c+1;
+                        let calName = calendarArray[c];
+                        console.log("calName="+calName)
+                        let calState = states['sensor.'+ calName].state;
+                        console.log("calState="+calState)
+                        let calData = states['sensor.'+ calName].attributes.data;
+                        
+                        let dataLength = calData.length;
+                        let firstMonth = calData[1].start_month;
+                        let firstDay = calData[1].start_day;
+                        
+                        let loopCounter = 0;
+                        let loopCounter_match = 0;
+                        let loopCounter_noMatch = 0;
+                      
+                        console.log(calData)
+                        
+                        calendar = calendar + `<div class="day ${calName}"><div class="date"><p class="date-num">9</p><p class="date-day">${calName}</p></div><div class="events">`;
+
+                        for (i = 0; i < calState; i++) {
+                          loopCounter = loopCounter + 1;  
+                          
+                          if ((calData[i].start_month_digits == digitsMonth)&&(calData[i].start_day == day)) {
+                            console.log("i="+i)
+                            loopCounter_match = loopCounter_match + 1;
+
+                            let start_time = "";
+                            let end_time = "";
+
+                            if (typeof calData[i].whole_day == "undefined") {
+                              start_time = calData[i].start_time;
+                              end_time = calData[i].end_time;
+                            } else {
+                              start_time = "9:00";
+                              end_time = "17:30";
+                            }
+                            console.log("start_time="+start_time)
+
+                            let start_hour = Number(start_time.split(':')[0]);
+                            let end_hour = Number(end_time.split(':')[0]);
+
+                            let start_minute = Number(start_time.split(':')[1]);
+                            let end_minute = Number(start_time.split(':')[1]);
+
+                            console.log("start_hour="+start_hour)
+                            let adjHour = start_hour+1
+                            let day = calData[i].start_day;
+                      
+                            let summary = calData[i].summary.replace(/'/g,'&apos;');
+                            let label = '';
+                      
+                            let startTime = start_time;
+                            let endTime = end_time;
+
+                            var id_string = 'c'+ calNum + '_' + adjHour;
+                            
+                            console.log("id_string:"+id_string)
+
+                            calendar = calendar + `<div class="event start-${start_hour} end-${end_hour} securities"><p class="title">${summary}</p><p class="time">${startTime} - ${endTime}</p></div>`;
+                          } else {
+                            loopCounter_noMatch = loopCounter_noMatch + 1;
+                          }
+                          
+                        }
+                        calendar = calendar + `</div></div>`;
+                        }
+                        calendar = calendar + `</div></div>`;
+                        console.log(calendar)
+                        return calendar;
+                      ]]]
+            styles:
+              card:
+                - box-shadow: none
+                - color: rgba(0, 0, 0, 0.85)
+                - padding: 0px
+              grid:
+                - grid-template-areas: '"header" "calendar"'
+                - grid-template-columns: 100%
+                - grid-template-rows: auto 1fr
+            card_mod:
+              style: |
+                html,
+                    body,
+                    div,
+                    span,
+                    applet,
+                    object,
+                    iframe,
+                    h1,
+                    h2,
+                    h3,
+                    h4,
+                    h5,
+                    h6,
+                    p,
+                    blockquote,
+                    pre,
+                    a,
+                    abbr,
+                    acronym,
+                    address,
+                    big,
+                    cite,
+                    code,
+                    del,
+                    dfn,
+                    em,
+                    img,
+                    ins,
+                    kbd,
+                    q,
+                    s,
+                    samp,
+                    small,
+                    strike,
+                    strong,
+                    sub,
+                    sup,
+                    tt,
+                    var,
+                    b,
+                    u,
+                    i,
+                    center,
+                    dl,
+                    dt,
+                    dd,
+                    ol,
+                    ul,
+                    li,
+                    fieldset,
+                    form,
+                    label,
+                    legend,
+                    table,
+                    caption,
+                    tbody,
+                    tfoot,
+                    thead,
+                    tr,
+                    th,
+                    td,
+                    article,
+                    aside,
+                    canvas,
+                    details,
+                    embed,
+                    figure,
+                    figcaption,
+                    footer,
+                    header,
+                    hgroup,
+                    menu,
+                    nav,
+                    output,
+                    ruby,
+                    section,
+                    summary,
+                    time,
+                    mark,
+                    audio,
+                    video {
+                        margin: 0;
+                        padding: 0;
+                        border: 0;
+                        font-size: 100%;
+                        font: inherit;
+                        vertical-align: baseline
+                    }
+                    
+                    article,
+                    aside,
+                    details,
+                    figcaption,
+                    figure,
+                    footer,
+                    header,
+                    hgroup,
+                    menu,
+                    nav,
+                    section {
+                        display: block
+                    }
+                    
+                    body {
+                        line-height: 1
+                    }
+                    
+                    ol,
+                    ul {
+                        list-style: none
+                    }
+                    
+                    blockquote,
+                    q {
+                        quotes: none
+                    }
+                    
+                    blockquote:before,
+                    blockquote:after,
+                    q:before,
+                    q:after {
+                        content: '';
+                        content: none
+                    }
+                    
+                    table {
+                        border-collapse: collapse;
+                        border-spacing: 0
+                    }
+                  :root {
+                        --numDays: 3;
+                        --numHours: 23;
+                        --timeHeight: 60px;
+                        --calBgColor: #fff1f8;
+                        --eventBorderColor: #f2d3d8;
+                        --eventColor1: #ffd6d1;
+                        --eventColor2: #fafaa3;
+                        --eventColor3: #e2f8ff;
+                        --eventColor4: #d1ffe6;
+                    }
+
+                    .calendar {
+                        display: grid;
+                        gap: 10px;
+                        grid-template-columns: auto 1fr;
+                        margin: 2rem;
+                    }
+
+                    .timeline {
+                        display: grid;
+                        grid-template-rows: repeat(var(--numHours), var(--timeHeight));
+                    }
+
+                    .days {
+                        display: grid;
+                        grid-column: 2;
+                        gap: 5px;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                    }
+
+                    .events {
+                        display: grid;
+                        grid-template-rows: repeat(var(--numHours), var(--timeHeight));
+                        border-radius: 5px;
+                        background: var(--calBgColor);
+                    }
+
+                    .title {
+                        font-weight: 600;
+                        margin-bottom: 0.25rem;
+                    }
+
+                    .event {
+                        border: 1px solid var(--eventBorderColor);
+                        border-radius: 5px;
+                        padding: 0.5rem;
+                        margin: 0 0.5rem;
+                        background: white;
+                    }
+
+                    .space,
+                    .date {
+                        height: 60px;
+                    }
+
+                    body {
+                        font-family: system-ui, sans-serif;
+                    }
+
+                    .corp-fi {
+                        background: var(--eventColor1);
+                    }
+
+                    .ent-law {
+                        background: var(--eventColor2);
+                    }
+
+                    .writing {
+                        background: var(--eventColor3);
+                    }
+
+                    .securities {
+                        background: var(--eventColor4);
+                    }
+
+                    .date {
+                        display: flex;
+                        gap: 1em;
+                    }
+
+                    .date-num {
+                        font-size: 3rem;
+                        font-weight: 600;
+                        display: inline;
+                    }
+
+                    .date-day {
+                        display: inline;
+                        font-size: 3rem;
+                        font-weight: 100;
+                    }
+
+                    /* Place on Timeline */
+                    .start-0 {
+                        grid-row-start: 1;
+                    }
+
+                    .start-1 {
+                        grid-row-start: 2;
+                    }
+
+                    .start-2 {
+                        grid-row-start: 3;
+                    }
+
+                    .start-3 {
+                        grid-row-start: 4;
+                    }
+
+                    .start-4 {
+                        grid-row-start: 5;
+                    }
+
+                    .start-5 {
+                        grid-row-start: 6;
+                    }
+
+                    .start-6 {
+                        grid-row-start: 7;
+                    }
+
+                    .start-7 {
+                        grid-row-start: 8;
+                    }
+
+                    .start-8 {
+                        grid-row-start: 9;
+                    }
+
+                    .start-9 {
+                        grid-row-start: 10;
+                    }
+
+                    .start-10 {
+                        grid-row-start: 11;
+                    }
+
+                    .start-11 {
+                        grid-row-start: 12;
+                    }
+
+                    .start-12 {
+                        grid-row-start: 13;
+                    }
+
+                    .start-13 {
+                        grid-row-start: 14;
+                    }
+
+                    .start-14 {
+                        grid-row-start: 15;
+                    }
+
+                    .start-15 {
+                        grid-row-start: 16;
+                    }
+
+                    .start-16 {
+                        grid-row-start: 17;
+                    }
+
+                    .start-17 {
+                        grid-row-start: 18;
+                    }
+
+                    .start-18 {
+                        grid-row-start: 19;
+                    }
+
+                    .start-19 {
+                        grid-row-start: 20;
+                    }
+
+                    .start-20 {
+                        grid-row-start: 21;
+                    }
+
+                    .start-21 {
+                        grid-row-start: 22;
+                    }
+
+                    .start-22 {
+                        grid-row-start: 23;
+                    }
+
+                    .start-23 {
+                        grid-row-start: 24;
+                    }
+
+                    .end-0 {
+                        grid-row-end: 1;
+                    }
+
+                    .end-1 {
+                        grid-row-end: 2;
+                    }
+
+                    .end-2 {
+                        grid-row-end: 3;
+                    }
+
+                    .end-3 {
+                        grid-row-end: 4;
+                    }
+
+                    .end-4 {
+                        grid-row-end: 5;
+                    }
+
+                    .end-5 {
+                        grid-row-end: 6;
+                    }
+
+                    .end-6 {
+                        grid-row-end: 7;
+                    }
+
+                    .end-7 {
+                        grid-row-end: 8;
+                    }
+
+                    .end-8 {
+                        grid-row-end: 9;
+                    }
+
+                    .end-9 {
+                        grid-row-end: 10;
+                    }
+
+                    .end-10 {
+                        grid-row-end: 11;
+                    }
+
+                    .end-11 {
+                        grid-row-end: 12;
+                    }
+
+                    .end-12 {
+                        grid-row-end: 13;
+                    }
+
+                    .end-13 {
+                        grid-row-end: 14;
+                    }
+
+                    .end-14 {
+                        grid-row-end: 15;
+                    }
+
+                    .end-15 {
+                        grid-row-end: 16;
+                    }
+
+                    .end-16 {
+                        grid-row-end: 17;
+                    }
+
+                    .end-17 {
+                        grid-row-end: 18;
+                    }
+
+                    .end-18 {
+                        grid-row-end: 19;
+                    }
+
+                    .end-19 {
+                        grid-row-end: 20;
+                    }
+
+                    .end-20 {
+                        grid-row-end: 21;
+                    }
+
+                    .end-21 {
+                        grid-row-end: 22;
+                    }
+
+                    .end-22 {
+                        grid-row-end: 23;
+                    }
+
+                    .end-23 {
+                        grid-row-end: 24;
+                    }
+                    
